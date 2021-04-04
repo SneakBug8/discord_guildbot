@@ -145,8 +145,12 @@ class CharacterServiceClass
     public async CreateCash(characterName: string, cash: number)
     {
         const character = await Character.GetWithName(characterName);
+        if (!character) {
+            return new Requisite().error("Нет такого персонажа.");
+        }
         character.ChangeCash(cash);
         await Character.Update(character);
+        return new Requisite(`Успешно выдано ${cash} благосклонности персонажу ${characterName}.`);
     }
 
     public async PayCash(from: string, to: string, cash: number)

@@ -56,7 +56,7 @@ class TimeskipServiceClass
             msg.reply(res.message);
             return true;
         }));
-        Server.RegisterCommand("!payout", this.AdminFilter(async (msg, matches) =>
+        Server.RegisterCommand("!payout$", this.AdminFilter(async (msg, matches) =>
         {
             PayoutService.payout();
             msg.reply("Выполняю выплаты.");
@@ -95,6 +95,15 @@ class TimeskipServiceClass
         Server.RegisterCommand("!createcash", this.AdminFilter(async (msg, matches) =>
         {
             msg.reply((await this.CreateCash(msg.message.author.id)).message);
+            return true;
+        }));
+        Server.RegisterCommand("^!apay ([a-zA-Zа-яА-Я ]+) ([0-9]+)$", this.AdminFilter(async (msg, matches) =>
+        {
+            const amount = Number.parseInt(matches[2], 10);
+
+            const res = await CharacterService.CreateCash(matches[1], amount);
+
+            msg.reply(res.message);
             return true;
         }));
     }

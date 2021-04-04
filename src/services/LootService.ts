@@ -79,7 +79,7 @@ class LootServiceClass {
             msg.reply(res.message);
             return true;
         });
-        Server.RegisterCommand("!loot", async (msg, matches) => {
+        Server.RegisterCommand("!loot$", async (msg, matches) => {
             if (msg.message.author.id !== Server.adminId) {
                 msg.reply("Вы не администратор для выполнения этого действия.");
                 return true;
