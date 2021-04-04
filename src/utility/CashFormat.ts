@@ -1,3 +1,3 @@
 export function FormatCash(money: number) {
-    return (money / 100).toFixed(2);
+    return (money).toFixed(0);
 }

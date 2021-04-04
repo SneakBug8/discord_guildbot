@@ -34,7 +34,7 @@ export class MessageWrapper
     public async reply(text: string)
     {
         const r = await this.message.reply(text);
-        return new MessageWrapper(r)
+        return new MessageWrapper(r);
     }
 
     public async replyMany(texts: string[])

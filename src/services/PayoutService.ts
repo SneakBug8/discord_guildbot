@@ -8,7 +8,9 @@ import { EconomyHealthChecker } from "./EconomyHealthChecker";
 
 class PayoutServiceClass
 {
-    lastPaid: number;
+    private lastPaid: number;
+    private paid: string[] = [];
+
     public Init()
     {
         this.afterStart();
@@ -40,8 +42,6 @@ class PayoutServiceClass
         this.timer();
     }
 
-    private paid: string[] = [];
-
     public async payout()
     {
         const payouts = await Payout.All();
@@ -57,41 +57,40 @@ class PayoutServiceClass
 
                 await Character.Update(char);
 
-                await Server.SendAdmin(`{} Персонаж ${char.name} получил за службу ${FormatCash(p.amount)} дукатов.`);
-                /*await Server.SendMessage(Server.mainChannel,
-                    `Персонаж ${char.name} получил за службу ${FormatCash(p.amount)} дукатов.`);*/
+                await Server.SendAdmin(`{} Персонаж ${char.name} получил за службу ${FormatCash(p.amount)} благосклонности.`);
+                await Server.SendMessage(Server.mainChannel,
+                    `Персонаж ${char.name} получил за службу ${FormatCash(p.amount)} благосклонности.`);
                 await Character.SendMessage(char,
-                    `Персонаж ${char.name} получил за службу ${FormatCash(p.amount)} дукатов.`);
+                    `Персонаж ${char.name} получил за службу ${FormatCash(p.amount)} благосклонности.` +
+                    ` Теперь у него ${char.cash} благосклонности.`);
             }
         }
 
-        // Инфляция
+        // Естественная убыль
         const chars = await Character.All();
-        const cashbefore = (await Character.GetWithName(CharacterService.BinCharacter)).cash;
+        let taken = 0;
 
         for (const c of chars) {
             /*if (this.paid.includes(c.name)) {
                 continue;
             }*/
 
-            const amount = Math.ceil(c.cash * 0.01);
-
-            await CharacterService.TransferCash(c.name, CharacterService.BinCharacter, amount);
+            const amount = Math.ceil(c.cash * 0.1);
+            await CharacterService.DestroyCash(c.name, amount);
+            taken += amount;
         }
 
-        const cashafter = (await Character.GetWithName(CharacterService.BinCharacter)).cash;
-
         await Server.SendMessage(Server.mainChannel,
-            `Выплачено зарплат на ${FormatCash(paid)} дуката. `
-            + `Инфляционные сборы составили ${FormatCash(cashafter - cashbefore)} дукатов.`);
+            `За должностные обязанности выдано ${FormatCash(paid)} благосклонности. `
+            + `Естественная убыль ${FormatCash(taken)} благосклонности.`);
 
-        if (paid < (cashafter - cashbefore)) {
+        if (paid < taken) {
             await Server.SendMessage(Server.mainChannel,
-                `https://media.giphy.com/media/Az8qq276ke2BO/giphy.gif`);
+                `https://media.giphy.com/media/1vAaDWLvujuCI/giphy.gif`);
         }
         else {
             await Server.SendMessage(Server.mainChannel,
-                `https://media.giphy.com/media/1vAaDWLvujuCI/giphy.gif`);
+                `https://media.giphy.com/media/Az8qq276ke2BO/giphy.gif`);
         }
 
         await EconomyHealthChecker.Announce();

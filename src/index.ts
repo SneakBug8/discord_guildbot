@@ -52,6 +52,10 @@ class App
                     return;
                 }
 
+                if (msg.guild && !this.guildIds.includes(msg.guild.id)) {
+                    return;
+                }
+
                 const message = new MessageWrapper(msg);
                 const time = message.getPrintableTime();
 
@@ -101,7 +105,7 @@ class App
         DiscordBot.on("guildMemberAdd", (member) =>
         {
             console.log(`User ${member.nickname} joined server`);
-            const channel = member.guild.channels.cache.find(ch => ch.id === "818581414437060640");
+            const channel = member.guild.channels.cache.find((ch) => ch.id === "818581414437060640");
             // Do nothing if the channel wasn't found on this server
             if (!channel) { return; }
             // Send the message, mentioning the member
@@ -111,7 +115,7 @@ class App
         DiscordBot.on("guildMemberRemove", (member) =>
         {
             console.log(`User ${member.nickname} left server`);
-            const channel = member.guild.channels.cache.find(ch => ch.id === "818581414437060640");
+            const channel = member.guild.channels.cache.find((ch) => ch.id === "818581414437060640");
             // Do nothing if the channel wasn't found on this server
             if (!channel) { return; }
             // Send the message, mentioning the member

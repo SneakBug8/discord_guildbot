@@ -37,69 +37,69 @@ class TimeskipServiceClass
             return true;
         });
 
-        Server.RegisterCommand("!timeskip", this.ChannelFilter(async (msg, matches) =>
+        Server.RegisterCommand("!timeskip", this.AdminFilter(async (msg, matches) =>
         {
             msg.reply((await this.Timeskip()).message);
             return true;
         }));
 
-        Server.RegisterCommand("!economy health", this.ChannelFilter(async (msg, matches) =>
+        Server.RegisterCommand("!economy health", this.AdminFilter(async (msg, matches) =>
         {
             msg.reply((await EconomyHealthChecker.Check()).message);
             return true;
         }));
 
-        Server.RegisterCommand("!payout set (.+) (.+)", this.ChannelFilter(async (msg, matches) =>
+        Server.RegisterCommand("!payout set (.+) (.+)", this.AdminFilter(async (msg, matches) =>
         {
-            const amount = Number.parseFloat(matches[2]) * 100;
+            const amount = Number.parseInt(matches[2], 10);
             const res = await this.SetPayout(matches[1], amount);
             msg.reply(res.message);
             return true;
         }));
-        Server.RegisterCommand("!payout", this.ChannelFilter(async (msg, matches) =>
+        Server.RegisterCommand("!payout", this.AdminFilter(async (msg, matches) =>
         {
             PayoutService.payout();
-            msg.reply("Выполня выплаты.");
+            msg.reply("Выполняю выплаты.");
             return true;
         }));
-        Server.RegisterCommand("!kill (.+)", this.ChannelFilter(async (msg, matches) =>
+        Server.RegisterCommand("!kill (.+)", this.AdminFilter(async (msg, matches) =>
         {
             msg.reply((await this.Kill(matches[1])).message);
             return true;
         }));
-        Server.RegisterCommand("!injure (.+)", this.ChannelFilter(async (msg, matches) =>
+        Server.RegisterCommand("!injure (.+)", this.AdminFilter(async (msg, matches) =>
         {
             msg.reply((await this.Injure(matches[1])).message);
             return true;
         }));
-        Server.RegisterCommand("!heal (.+)", this.ChannelFilter(async (msg, matches) =>
+        Server.RegisterCommand("!heal (.+)", this.AdminFilter(async (msg, matches) =>
         {
             msg.reply((await this.Heal(matches[1])).message);
             return true;
         }));
-        Server.RegisterCommand("!register (.+) (.+)", this.ChannelFilter(async (msg, matches) =>
+        Server.RegisterCommand("!register (.+) (.+)", this.AdminFilter(async (msg, matches) =>
         {
             msg.reply((await this.Register(matches[1], matches[2])).message);
             return true;
         }));
-        Server.RegisterCommand("!injured", this.ChannelFilter(async (msg, matches) =>
+        Server.RegisterCommand("!injured", this.AdminFilter(async (msg, matches) =>
         {
             msg.reply((await this.Injured()).message);
             return true;
         }));
-        Server.RegisterCommand("!richest", this.ChannelFilter(async (msg, matches) =>
+        Server.RegisterCommand("!richest", this.AdminFilter(async (msg, matches) =>
         {
             msg.reply((await this.Richest()).message);
             return true;
         }));
-        Server.RegisterCommand("!createcash", this.ChannelFilter(async (msg, matches) =>
+        Server.RegisterCommand("!createcash", this.AdminFilter(async (msg, matches) =>
         {
             msg.reply((await this.CreateCash(msg.message.author.id)).message);
             return true;
         }));
     }
 
-    public ChannelFilter(decorated)
+    public AdminFilter(decorated)
     {
         return (msg, matches) =>
         {
@@ -253,7 +253,7 @@ class TimeskipServiceClass
     {
         const char = await CharacterService.GetForUser(userId);
 
-        char.cash += 1000000;
+        char.cash += 100;
         Character.Update(char);
 
         return new Requisite("Деньги созданы");

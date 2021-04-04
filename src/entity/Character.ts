@@ -68,10 +68,10 @@ export class Character
     {
         await CharacterRepository().where("id", character.id).update({
             name: character.name,
-            cash: character.cash,
+            cash: (character.cash > 100) ? 100 : character.cash,
             userId: character.userId,
             dead: character.dead,
-            injury: character.injury,
+            injury: (character.injury < 0) ? 0 : character.injury,
         });
     }
 
@@ -88,11 +88,11 @@ export class Character
     {
         const d = await CharacterRepository().insert({
             id: character.id,
-            cash: character.cash,
+            cash: (character.cash > 100) ? 100 : character.cash,
             name: character.name,
             userId: character.userId,
             dead: character.dead,
-            injury: character.injury
+            injury: (character.injury < 0) ? 0 : character.injury
         });
 
         character.id = d[0];

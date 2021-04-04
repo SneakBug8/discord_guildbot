@@ -9,7 +9,7 @@ import { ItemsService } from "./ItemsService";
 import { Requisite } from "./Requisites/Requisite";
 
 class LootServiceClass {
-    public BuyPrice = 100;
+    public BuyPrice = 10;
     public LootboxName = "Lootbox";
 
     public async RegisterCommands() {
@@ -22,7 +22,7 @@ class LootServiceClass {
             const res = await this.Buy(char);
 
             if (res.result) {
-                msg.reply(`Персонаж ${char.name} успешно купил сундук за ${FormatCash(this.BuyPrice)} дукатов.`);
+                msg.reply(`Персонаж ${char.name} успешно купил сундук за ${FormatCash(this.BuyPrice)} благосклонности.`);
             }
             msg.reply(res.message);
             return true;
@@ -162,7 +162,8 @@ class LootServiceClass {
     }
 
     public async Buy(char: Character) {
-        const res = await CharacterService.TransferCash(char.name, CharacterService.BinCharacter, this.BuyPrice);
+
+        const res = await CharacterService.DestroyCash(char.name, this.BuyPrice);
         if (!res.result) {
             return res;
         }

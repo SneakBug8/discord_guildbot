@@ -29,10 +29,10 @@ class EconomyHealthCheckerClass
             this.InBank += part;
         }
 
-        const bin = await Character.GetWithName(CharacterService.BinCharacter);
-        const TotalInEconomy = await Character.TotalCash() - bin.cash;
+        const TotalInEconomy = await Character.TotalCash();
+        const totalchars = Character.All();
 
-        return new Requisite(`В экономике ${FormatCash(TotalInEconomy)} дукатов.`);
+        return new Requisite(`Средняя благосклонность - ${FormatCash(TotalInEconomy / (await totalchars).length)}.`);
 
         /*if (TotalInEconomy <= this.InBank) {
             await Server.SendMessage(Server.mainChannel,

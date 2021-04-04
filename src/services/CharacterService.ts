@@ -7,38 +7,37 @@ import { ChannelFilter } from "../utility/ChannelFilter";
 class CharacterServiceClass
 {
     public Users: Array<{ userId: string, characterId: number }> = [];
-    public BinCharacter = "Bin";
 
     public Init()
     {
         Server.RegisterCommand("!characters", ChannelFilter(async (msg) =>
         {
-            msg.reply((await this.ListCharacters(msg.message.author.id)).message)
+            msg.reply((await this.ListCharacters(msg.message.author.id)).message);
             return true;
         }));
         Server.RegisterCommand("!character (.+)", ChannelFilter(async (msg, matches) =>
         {
-            msg.reply((await this.FindCharacter(matches[1])).message)
+            msg.reply((await this.FindCharacter(matches[1])).message);
             return true;
         }));
         Server.RegisterCommand("!player <@.*?([0-9]+).*?>", ChannelFilter(async (msg, matches) =>
         {
-            msg.reply((await this.ListOtherCharacters(matches[1])).message)
+            msg.reply((await this.ListOtherCharacters(matches[1])).message);
             return true;
         }));
         Server.RegisterCommand("!register (.+)$", ChannelFilter(async (msg, matches) =>
         {
-            msg.reply((await this.Register(msg.message.author.id, matches[1])).message)
+            msg.reply((await this.Register(msg.message.author.id, matches[1])).message);
             return true;
         }));
         Server.RegisterCommand("!player <@.*?([0-9]+).*?>", ChannelFilter(async (msg, matches) =>
         {
-            msg.reply((await this.ListOtherCharacters(matches[1])).message)
+            msg.reply((await this.ListOtherCharacters(matches[1])).message);
             return true;
         }));
         Server.RegisterCommand("!login (.+)", ChannelFilter(async (msg, matches) =>
         {
-            msg.reply((await this.Authorize(msg.message.author.id, matches[1])).message)
+            msg.reply((await this.Authorize(msg.message.author.id, matches[1])).message);
             return true;
         }));
         Server.RegisterCommand("!cash", ChannelFilter(async (msg) =>
@@ -53,13 +52,13 @@ class CharacterServiceClass
                 msg.reply(character.message);
             }
 
-            msg.reply(`У персонажа ${character.data.name} на счету ${FormatCash(character.data.cash)} дукатов.\n` +
+            msg.reply(`У персонажа ${character.data.name} благосклонность ${FormatCash(character.data.cash)}.\n` +
                 `https://media.giphy.com/media/YFn46DerlaOeQ/giphy.gif`);
             return true;
         }));
         Server.RegisterCommand("^!pay ([a-zA-Zа-яА-Я]+) ([0-9\.]+)$", ChannelFilter(async (msg, matches) =>
         {
-            const amount = Number.parseFloat(matches[2]) * 100;
+            const amount = Number.parseFloat(matches[2]);
 
             const character = await this.GetForUser(msg.message.author.id);
 
@@ -127,8 +126,8 @@ class CharacterServiceClass
         await Character.Create(characterName, userId);
 
         // Приветственный бонус
-        //char.cash = 5000;
-        //await Character.Update(char);
+        // char.cash = 5000;
+        // await Character.Update(char);
         /*await Character.SendMessage(char, `Вам начислен приветственный бонус в 50 дукатов. Спасибо, что вы с нами!
 Напишите !help, чтобы увидеть список команд бота.`);*/
 
@@ -161,8 +160,29 @@ class CharacterServiceClass
             return r1;
         }
 
-
         return r1;
+    }
+
+    public async DestroyCash(from: string, cash: number)
+    {
+        const fromCharacter = await Character.GetWithName(from);
+
+        if (!fromCharacter) {
+            return new Requisite().error("Вашего персонажа не существует.");
+        }
+        if (cash <= 0) {
+            return new Requisite().error("Некорректная сумма");
+        }
+
+        if (fromCharacter.cash <= cash) {
+            return new Requisite().error(`Недостаточно средств. ` +
+            `Вы можете заработать благосклонность посещением ивентов, работой на гильдию или за механическое золото.`);
+        }
+
+        fromCharacter.cash -= cash;
+        await Character.Update(fromCharacter);
+
+        return new Requisite(`Успешная оплата ${FormatCash(cash)} благосклонности.`);
     }
 
     public async TransferCash(from: string, to: string, cash: number)
@@ -187,7 +207,7 @@ class CharacterServiceClass
 
         if (fromCharacter.cash <= cash) {
             return new Requisite().error(`Недостаточно средств. ` +
-            `Вы можете заработать дукаты посещением ивентов, работой на гильдию или купить за механическое золото.`);
+            `Вы можете заработать благосклонность посещением ивентов, работой на гильдию или за механическое золото.`);
         }
 
         fromCharacter.cash -= cash;
@@ -301,7 +321,7 @@ class CharacterServiceClass
         }
 
         for (const char of characters) {
-            text += `${char.name}. ${3 - char.injury} здоровья, ${FormatCash(char.cash)} дукатов.\n`;
+            text += `${char.name}. ${3 - char.injury} здоровья, ${FormatCash(char.cash)} благосклонности.\n`;
         }
 
         return new Requisite(text);
@@ -323,7 +343,6 @@ class CharacterServiceClass
 
         return new Requisite(text);
     }
-
 
 }
 
