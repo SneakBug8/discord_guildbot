@@ -145,13 +145,13 @@ class CharacterServiceClass
     public async CreateCash(characterName: string, cash: number)
     {
         const character = await Character.GetWithName(characterName);
-        character.cash += cash;
-        Character.Update(character);
+        character.ChangeCash(cash);
+        await Character.Update(character);
     }
 
     public async PayCash(from: string, to: string, cash: number)
     {
-        const willpay = Math.floor(cash * 0.95);
+        const willpay = Math.floor(cash * 0.5);
         const delta = cash - willpay;
 
         const r1 = await this.TransferCash(from, to, willpay);
@@ -179,7 +179,7 @@ class CharacterServiceClass
             `Вы можете заработать благосклонность посещением ивентов, работой на гильдию или за механическое золото.`);
         }
 
-        fromCharacter.cash -= cash;
+        fromCharacter.SetCash(fromCharacter.cash - cash);
         await Character.Update(fromCharacter);
 
         return new Requisite(`Успешная оплата ${FormatCash(cash)} благосклонности.`);
@@ -210,8 +210,8 @@ class CharacterServiceClass
             `Вы можете заработать благосклонность посещением ивентов, работой на гильдию или за механическое золото.`);
         }
 
-        fromCharacter.cash -= cash;
-        toCharacter.cash += cash;
+        fromCharacter.ChangeCash(- cash);
+        toCharacter.ChangeCash(+ cash);
         await Character.Update(fromCharacter);
         await Character.Update(toCharacter);
 

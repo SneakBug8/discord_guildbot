@@ -30,9 +30,9 @@ class EconomyHealthCheckerClass
         }
 
         const TotalInEconomy = await Character.TotalCash();
-        const totalchars = Character.All();
+        const totalchars = Character.Active();
 
-        return new Requisite(`Средняя благосклонность - ${FormatCash(TotalInEconomy / (await totalchars).length)}.`);
+        return new Requisite(`Средняя благосклонность (активных) - ${FormatCash(TotalInEconomy / (await totalchars).length)}.`);
 
         /*if (TotalInEconomy <= this.InBank) {
             await Server.SendMessage(Server.mainChannel,

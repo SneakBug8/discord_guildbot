@@ -50,7 +50,7 @@ class PayoutServiceClass
         for (const p of payouts) {
             const char = await Character.GetWithName(p.name);
             if (char && char.injury === 0 && p.amount > 0) {
-                char.cash += p.amount;
+                char.SetCash(char.cash + p.amount);
                 paid += p.amount;
 
                 this.paid.push(char.name);
@@ -64,10 +64,18 @@ class PayoutServiceClass
                     `Персонаж ${char.name} получил за службу ${FormatCash(p.amount)} благосклонности.` +
                     ` Теперь у него ${char.cash} благосклонности.`);
             }
+            else if (char.injury !== 0) {
+                await Server.SendAdmin(`{} Персонаж ${char.name} ранен и не может выполнять свои обязанности.`);
+                await Server.SendMessage(Server.mainChannel,
+                    `Персонаж ${char.name} ранен и не может выполнять свои обязанности.`);
+                await Character.SendMessage(char,
+                    `Персонаж ${char.name} ранен и не может выполнять свои обязанности.` +
+                    ` Обратитесь к лекарям за лечением и пришлите скриншот лечения в <!#818582278686113792>.`);
+            }
         }
 
         // Естественная убыль
-        const chars = await Character.All();
+        const chars = await Character.Active();
         let taken = 0;
 
         for (const c of chars) {

@@ -135,8 +135,8 @@ export class Character
         const data = await CharacterRepository().sum("cash as c").select();
 
         if (data) {
-                return data[0].c;
-            }
+            return data[0].c;
+        }
 
         return 0;
     }
@@ -144,6 +144,22 @@ export class Character
     public static async All(): Promise<Character[]>
     {
         const data = await CharacterRepository().select();
+        const res = new Array<Character>();
+
+        if (data) {
+            for (const entry of data) {
+                res.push(await this.From(entry));
+            }
+
+            return res;
+        }
+
+        return [];
+    }
+
+    public static async Active(): Promise<Character[]>
+    {
+        const data = await CharacterRepository().where("cash", ">", 0).select();
         const res = new Array<Character>();
 
         if (data) {
@@ -172,6 +188,24 @@ export class Character
     public userId: string;
     public dead: boolean = false;
     public injury: number = 0;
+
+    public SetCash(cash: number)
+    {
+        this.cash = (cash > 100) ? 100 : cash;
+    }
+
+    public ChangeCash(cash: number)
+    {
+        this.SetCash(this.cash + cash);
+    }
+
+    public SetInjury(injury: number)
+    {
+        if (injury > 3) {
+            this.dead = true;
+        }
+        this.injury = (injury < 0) ? 0 : injury;
+    }
 }
 
 export const CharacterRepository = () => Connection("Characters");

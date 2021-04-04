@@ -211,7 +211,7 @@ class TimeskipServiceClass
                 Character.SendMessage(char, `Персонаж ${char.name} поправляется.`);
             }
             else {
-                char.cash += timeskipCash;
+                char.ChangeCash(timeskipCash);
 
                 Character.Update(char);
                 Character.SendMessage(char, `Персонаж ${char.name} смог немного заработать.`);
@@ -253,7 +253,7 @@ class TimeskipServiceClass
     {
         const char = await CharacterService.GetForUser(userId);
 
-        char.cash += 100;
+        char.ChangeCash(100);
         Character.Update(char);
 
         return new Requisite("Деньги созданы");
