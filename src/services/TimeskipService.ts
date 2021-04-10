@@ -106,11 +106,29 @@ class TimeskipServiceClass
             msg.reply(res.message);
             return true;
         }));
+        Server.RegisterCommand("^!apay ([a-zA-Zа-яА-Я ,]+) ([0-9]+)$", this.AdminFilter(async (msg, matches) =>
+        {
+            const amount = Number.parseInt(matches[2], 10);
+
+            const names = matches[1].replace(", ", ",").split(",");
+
+            const topay = Math.round(amount / names.length);
+            let re = "";
+
+            for (const name of names) {
+                const res = await CharacterService.CreateCash(matches[1], amount);
+                re += res.message + "\n";
+            }
+
+            msg.reply(re);
+            return true;
+        }));
     }
 
-    public AdminFilter(decorated)
+    public AdminFilter(decorated: (msg: MessageWrapper, matches: RegExpExecArray) => Promise<boolean>)
+        : (msg: MessageWrapper, matches: RegExpExecArray) => Promise<boolean>
     {
-        return (msg, matches) =>
+        return async (msg: MessageWrapper, matches: RegExpExecArray) =>
         {
             const member = msg.message.member;
             if ((!member || !member.roles.cache.has(votingRole)) && msg.message.author.id !== Server.adminId) {
@@ -124,6 +142,8 @@ class TimeskipServiceClass
     public async Register(userId: string, name: string)
     {
         const exists = await Character.GetWithName(name);
+
+        const filteredUserId = userId.replace("<", "").replace(">", "").replace("!", "").replace("@", "");
 
         if (exists) {
             return new Requisite().error("Персонаж с таким именем уже существует.");
@@ -262,8 +282,7 @@ class TimeskipServiceClass
     {
         const char = await CharacterService.GetForUser(userId);
 
-        char.ChangeCash(100);
-        Character.Update(char);
+        await CharacterService.CreateCash(char.name, 100);
 
         return new Requisite("Деньги созданы");
     }

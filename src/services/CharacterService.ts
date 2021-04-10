@@ -3,6 +3,7 @@ import { Requisite } from "./Requisites/Requisite";
 import { FormatCash } from "../utility/CashFormat";
 import { Server } from "..";
 import { ChannelFilter } from "../utility/ChannelFilter";
+import { CashMovement } from "../utility/Logger";
 
 class CharacterServiceClass
 {
@@ -74,6 +75,11 @@ class CharacterServiceClass
         Server.RegisterCommand("!health", ChannelFilter(async (msg) =>
         {
             msg.reply((await this.CheckHealth(msg.message.author.id)).message);
+            return true;
+        }));
+        Server.RegisterCommand("!status", ChannelFilter(async (msg) =>
+        {
+            msg.reply((await this.GetStatus(msg.message.author.id)).message);
             return true;
         }));
     }
@@ -149,6 +155,8 @@ class CharacterServiceClass
             return new Requisite().error("Нет такого персонажа.");
         }
         character.ChangeCash(cash);
+
+        CashMovement.info(`${character.name} | ${cash}`);
         await Character.Update(character);
         return new Requisite(`Успешно выдано ${cash} благосклонности персонажу ${characterName}.`);
     }
@@ -185,6 +193,7 @@ class CharacterServiceClass
 
         fromCharacter.SetCash(fromCharacter.cash - cash);
         await Character.Update(fromCharacter);
+        CashMovement.info(`${fromCharacter.cash} | ${-cash}`);
 
         return new Requisite(`Успешная оплата ${FormatCash(cash)} благосклонности.`);
     }
@@ -218,6 +227,8 @@ class CharacterServiceClass
         toCharacter.ChangeCash(+ cash);
         await Character.Update(fromCharacter);
         await Character.Update(toCharacter);
+        CashMovement.info(`${fromCharacter.cash} | ${-cash}`);
+        CashMovement.info(`${toCharacter.cash} | ${cash}`);
 
         return new Requisite(`Успешная оплата ${FormatCash(cash)} персонажу ${toCharacter.name}`);
     }
@@ -236,12 +247,12 @@ class CharacterServiceClass
             return await this.TryGetCharacter(existing.characterId);
         }
 
-        // try authorize if sole character
+        // try autoauthorize
         const characters = await Character.GetWithUserID(userId);
-        if (characters.length === 1) {
-            this.Login(userId, characters[1]);
-            return (await this.TryGetCharacter(existing.characterId))
-                .success(`Автоматически авторизован как ${characters[1].name}.`);
+        if (characters.length) {
+            this.Login(userId, characters[0]);
+            return new Requisite(characters[0])
+                .success(`Автоматически авторизован как ${characters[0].name}.`);
         }
 
         return new Requisite<Character>().error(`Вы не авторизованы.\n`
@@ -301,6 +312,25 @@ class CharacterServiceClass
             return new Requisite(`${pre}${character.data.name} полностью здоров.\n` +
                 `https://media.giphy.com/media/3oD3YGaZEu21s5ymYw/giphy.gif`);
         }
+    }
+
+    public async GetStatus(userId: string)
+    {
+        const character = await this.TryGetForUser(userId);
+
+        if (!character.result) {
+            return character;
+        }
+
+        let pre = "";
+        if (character.message) {
+            pre = character.message + "\n";
+        }
+
+        pre += `Благосклонность: ${character.data.cash}`;
+        pre += `Ранений: ${character.data.injury}`;
+
+        return new Requisite(pre);
     }
 
     public async FindCharacter(name: string)

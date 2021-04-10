@@ -33,6 +33,7 @@ class App
     public mainChannel: string = "819154184992456764";
     public channelIds: string[] = ["819154184992456764", /*"821033166058946610"*/];
     public generalIds: string[] = ["818578437325193290"/*, "807933548505333805"*/];
+    public taskIds: string[] = ["828682694607110194"];
     public adminId: string = "156979394953478144";
     public adminDM: string = "465984266430447616";
     public guildIds: string[] = ["818578437325193286", /*"807933548505333802"*/];
@@ -82,7 +83,8 @@ class App
                 await DemocracyService.processMessage(message);
             }
             catch (e) {
-                this.SendAdmin(e || "Unknown exception");
+                this.SendAdmin(`Exception ${e}`);
+                Logger.error(e);
             }
         });
         DiscordBot.on("messageUpdate", async (msg) =>
@@ -99,7 +101,8 @@ class App
                 CensorService.checkMessage(message);
             }
             catch (e) {
-                this.SendAdmin(e || "Unknown exception");
+                this.SendAdmin(`Exception ${e}`);
+                Logger.error(e);
             }
         });
         DiscordBot.on("guildMemberAdd", (member) =>

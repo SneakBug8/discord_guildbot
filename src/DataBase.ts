@@ -1,5 +1,8 @@
 // import sqlite3 = require('sqlite3').sqlite3.verbose();
 import * as knex from "knex";
+import { constants } from "fs";
+import { copyFile } from "fs/promises";
+import { Logger } from "./utility/Logger";
 
 export const Connection = knex({
     client: "sqlite3",
@@ -14,6 +17,16 @@ export const Connection = knex({
         },
     },
 });
+
+export async function backupDatabase()
+{
+    try {
+        await copyFile("db.db", "db.backup.db");
+        Logger.info("Database file successfuly backed up.");
+    } catch (e) {
+        Logger.error(e);
+    }
+}
 
 /*export const Connection = new sqlite3.Database("./db.db", (err) =>
 {

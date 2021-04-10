@@ -84,7 +84,7 @@ export class Item
         item.name = name;
         item.owner = owner;
 
-        return this.Insert(item);
+        return await this.Insert(item);
     }
 
     public static async Insert(Item: Item): Promise<number>

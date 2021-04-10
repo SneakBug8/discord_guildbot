@@ -4,16 +4,20 @@ import { Item } from "../entity/Item";
 import { Loot } from "../entity/Loot";
 import { FormatCash } from "../utility/CashFormat";
 import { ChannelFilter } from "../utility/ChannelFilter";
+import { sleep } from "../utility/sleep";
 import { CharacterService } from "./CharacterService";
 import { ItemsService } from "./ItemsService";
 import { Requisite } from "./Requisites/Requisite";
 
-class LootServiceClass {
+class LootServiceClass
+{
     public BuyPrice = 10;
     public LootboxName = "Lootbox";
 
-    public async RegisterCommands() {
-        Server.RegisterCommand("!lootbox buy", ChannelFilter(async (msg) => {
+    public async RegisterCommands()
+    {
+        Server.RegisterCommand("!lootbox buy", ChannelFilter(async (msg) =>
+        {
             const char = await CharacterService.GetForUser(msg.message.author.id);
             if (!char) {
                 msg.reply("Вы не авторизованы.");
@@ -27,7 +31,8 @@ class LootServiceClass {
             msg.reply(res.message);
             return true;
         }));
-        Server.RegisterCommand("!lootbox open", ChannelFilter(async (msg) => {
+        Server.RegisterCommand("!lootbox open", ChannelFilter(async (msg) =>
+        {
             const char = await CharacterService.TryGetForUser(msg.message.author.id);
 
             if (!char.result) {
@@ -39,19 +44,12 @@ class LootServiceClass {
                 msg.reply(char.message);
             }
 
-            const lootbox = await ItemsService.HasItem(this.LootboxName, char.data.name);
-            if (!lootbox.result) {
-                msg.reply(lootbox.message);
-                return true;
-            }
-
-            const res = await this.Roll(char.data);
-
-            Item.Delete(lootbox.data.id);
+            const res = await this.TryRoll(char.data);
             msg.reply(res.message);
             return true;
         }));
-        Server.RegisterCommand("!lootbox give (.+)", async (msg, matches) => {
+        Server.RegisterCommand("!lootbox give (.+)", async (msg, matches) =>
+        {
             if (msg.message.author.id !== Server.adminId) {
                 msg.reply("Вы не администратор для выполнения этого действия.");
                 return true;
@@ -66,11 +64,12 @@ class LootServiceClass {
 
             const lootbox = await ItemsService.AddItem(this.LootboxName, char.name);
             Character.SendMessage(char, `Персонажем ${char.name} получен сундук.` +
-            `Используйте !lootbox open, чтобы открыть его.`);
+                `Используйте !lootbox open, чтобы открыть его.`);
             msg.reply(`Персонажу ${char.name} выдан сундук.`);
             return true;
         });
-        Server.RegisterCommand("!loot all", async (msg, matches) => {
+        Server.RegisterCommand("!loot all", async (msg, matches) =>
+        {
             if (msg.message.author.id !== Server.adminId) {
                 msg.reply("Вы не администратор для выполнения этого действия.");
                 return true;
@@ -79,7 +78,8 @@ class LootServiceClass {
             msg.reply(res.message);
             return true;
         });
-        Server.RegisterCommand("!loot$", async (msg, matches) => {
+        Server.RegisterCommand("!loot$", async (msg, matches) =>
+        {
             if (msg.message.author.id !== Server.adminId) {
                 msg.reply("Вы не администратор для выполнения этого действия.");
                 return true;
@@ -88,7 +88,8 @@ class LootServiceClass {
             msg.reply(res.message);
             return true;
         });
-        Server.RegisterCommand("!loot add (.+)", async (msg, matches) => {
+        Server.RegisterCommand("!loot add (.+)", async (msg, matches) =>
+        {
             if (msg.message.author.id !== Server.adminId) {
                 msg.reply("Вы не администратор для выполнения этого действия.");
                 return true;
@@ -98,7 +99,8 @@ class LootServiceClass {
             msg.reply(`Создан дроп ${matches[1]}`);
             return true;
         });
-        Server.RegisterCommand("!loot set (.+?),([0-9]+)", async (msg, matches) => {
+        Server.RegisterCommand("!loot set (.+?) *; *([0-9]+)", async (msg, matches) =>
+        {
             if (msg.message.author.id !== Server.adminId) {
                 msg.reply("Вы не администратор для выполнения этого действия.");
                 return true;
@@ -118,7 +120,8 @@ class LootServiceClass {
         });
     }
 
-    public async List(filter: boolean = true) {
+    public async List(filter: boolean = true)
+    {
         const loot = (filter) ? await Loot.Lootable() : await Loot.All();
         let res = "";
         let i = 0;
@@ -128,7 +131,22 @@ class LootServiceClass {
         return new Requisite(res);
     }
 
-    public async Roll(char: Character) {
+    public async TryRoll(char: Character)
+    {
+        const lootbox = await ItemsService.HasItem(this.LootboxName, char.name);
+        if (!lootbox.result) {
+            return lootbox;
+        }
+
+        const res = await this.Roll(char);
+
+        await Item.Delete(lootbox.data.id);
+
+        return res;
+    }
+
+    public async Roll(char: Character)
+    {
         const variants = await Loot.Lootable();
 
         if (!variants.length) {
@@ -139,14 +157,14 @@ class LootServiceClass {
 
         const item = variants[random];
 
-        ItemsService.AddItem(item.name, char.name);
+        await ItemsService.AddItem(item.name, char.name);
 
         item.amount--;
-        Loot.Update(item);
+        await Loot.Update(item);
 
         Server.SendAdmin(`Персонаж ${char.name} выбил ${item.name} из сундука.`);
         Server.SendMessages(Server.generalIds, `Персонаж ${char.name} выбил ${item.name} из сундука.\n` +
-        `https://media.giphy.com/media/iwVHUKnyvZKEg/giphy.gif`);
+            `https://media.giphy.com/media/iwVHUKnyvZKEg/giphy.gif`);
 
         let decoration = "";
         for (let i = 0; i < 5 + Math.random() * 10; i++) {
@@ -156,19 +174,31 @@ class LootServiceClass {
             `\nИз сундука вам выпал ${item.name}.`);
     }
 
-    public async Append(name: string, amount: number) {
+    public async Append(name: string, amount: number)
+    {
         const loot = await Loot.Create(name, amount);
         return loot;
     }
 
-    public async Buy(char: Character) {
+    public async Buy(char: Character)
+    {
 
         const res = await CharacterService.DestroyCash(char.name, this.BuyPrice);
         if (!res.result) {
             return res;
         }
 
-        return this.Roll(char);
+        await ItemsService.AddItem(this.LootboxName, char.name);
+
+        await sleep(1000);
+
+        const roll = await this.TryRoll(char);
+
+        if (!roll.result) {
+            return new Requisite("Приобретён сундук.");
+        }
+
+        return roll;
     }
 }
 

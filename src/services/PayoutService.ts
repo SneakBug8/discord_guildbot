@@ -1,10 +1,14 @@
 import { Server } from "..";
+import { backupDatabase } from "../DataBase";
 import { Character } from "../entity/Character";
 import { Payout } from "../entity/Payout";
 import { FormatCash } from "../utility/CashFormat";
+import { Logger } from "../utility/Logger";
 import { sleep } from "../utility/sleep";
+import { AdsService } from "./AdsService";
 import { CharacterService } from "./CharacterService";
 import { EconomyHealthChecker } from "./EconomyHealthChecker";
+import { LootService } from "./LootService";
 
 class PayoutServiceClass
 {
@@ -14,7 +18,7 @@ class PayoutServiceClass
     public Init()
     {
         this.afterStart();
-        setInterval(() => { this.timer(); }, 1000 * 60 * 30);
+        setInterval(() => { this.timer(); }, 1000 * 60 * 15);
 
         Server.RegisterCommand("!payouts", async (msg) =>
         {
@@ -38,41 +42,13 @@ class PayoutServiceClass
 
     public async afterStart()
     {
-        await sleep(5000);
-        this.timer();
+        // await sleep(5000);
+        // this.timer();
     }
 
     public async payout()
     {
-        const payouts = await Payout.All();
-        let paid = 0;
-
-        for (const p of payouts) {
-            const char = await Character.GetWithName(p.name);
-            if (char && char.injury === 0 && p.amount > 0) {
-                char.SetCash(char.cash + p.amount);
-                paid += p.amount;
-
-                this.paid.push(char.name);
-
-                await Character.Update(char);
-
-                await Server.SendAdmin(`{} Персонаж ${char.name} получил за службу ${FormatCash(p.amount)} благосклонности.`);
-                await Server.SendMessage(Server.mainChannel,
-                    `Персонаж ${char.name} получил за службу ${FormatCash(p.amount)} благосклонности.`);
-                await Character.SendMessage(char,
-                    `Персонаж ${char.name} получил за службу ${FormatCash(p.amount)} благосклонности.` +
-                    ` Теперь у него ${char.cash} благосклонности.`);
-            }
-            else if (char.injury !== 0) {
-                await Server.SendAdmin(`{} Персонаж ${char.name} ранен и не может выполнять свои обязанности.`);
-                await Server.SendMessage(Server.mainChannel,
-                    `Персонаж ${char.name} ранен и не может выполнять свои обязанности.`);
-                await Character.SendMessage(char,
-                    `Персонаж ${char.name} ранен и не может выполнять свои обязанности.` +
-                    ` Обратитесь к лекарям за лечением и пришлите скриншот лечения в <!#818582278686113792>.`);
-            }
-        }
+        await backupDatabase();
 
         // Естественная убыль
         const chars = await Character.Active();
@@ -86,6 +62,46 @@ class PayoutServiceClass
             const amount = Math.ceil(c.cash * 0.1);
             await CharacterService.DestroyCash(c.name, amount);
             taken += amount;
+        }
+
+        const payouts = await Payout.All();
+        let paid = 0;
+
+        await Server.SendMessages(Server.generalIds, AdsService.GetLine());
+
+        for (const p of payouts) {
+            const char = await Character.GetWithName(p.name);
+
+            if (!p.amount) {
+                continue;
+            }
+
+            if (char && char.injury === 0) {
+                char.SetCash(char.cash + p.amount);
+                paid += p.amount;
+
+                this.paid.push(char.name);
+
+                await Character.Update(char);
+
+                await Server.SendAdmin(
+                    `{} Персонаж ${char.name} получил за службу ${FormatCash(p.amount)} благосклонности.`);
+                await Server.SendMessage(Server.mainChannel,
+                    `Персонаж ${char.name} получил за службу ${FormatCash(p.amount)} благосклонности.`);
+                await Character.SendMessage(char,
+                    `Персонаж ${char.name} получил за службу ${FormatCash(p.amount)} благосклонности.` +
+                    ` Теперь у него ${char.cash} благосклонности.` +
+                    ((char.cash >= LootService.BuyPrice) ?
+                        `\nНакопленной благосклонности достаточно для покупки сундука.` : ""));
+            }
+            else if (char.injury !== 0) {
+                await Server.SendAdmin(`{} Персонаж ${char.name} ранен и не может выполнять свои обязанности.`);
+                await Server.SendMessage(Server.mainChannel,
+                    `Персонаж ${char.name} ранен и не может выполнять свои обязанности.`);
+                await Character.SendMessage(char,
+                    `Персонаж ${char.name} ранен и не может выполнять свои обязанности.` +
+                    ` Обратитесь к лекарям за лечением и пришлите скриншот лечения в канал отчётов.`);
+            }
         }
 
         await Server.SendMessage(Server.mainChannel,
@@ -108,7 +124,7 @@ class PayoutServiceClass
     {
         const now = new Date(Date.now());
 
-        if (now.getHours() === 18 && this.lastPaid !== now.getDay()) {
+        if (now.getHours() === 16 && now.getMinutes() <= 15 && this.lastPaid !== now.getDay()) {
             console.log(now + " payment time");
             this.payout();
             this.lastPaid = now.getDay();
