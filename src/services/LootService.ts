@@ -183,7 +183,7 @@ class LootServiceClass
     public async Buy(char: Character)
     {
 
-        const res = await CharacterService.DestroyCash(char.name, this.BuyPrice);
+        const res = await CharacterService.DestroyCash(char.name, this.BuyPrice, "Chest purchased");
         if (!res.result) {
             return res;
         }

@@ -60,7 +60,7 @@ class PayoutServiceClass
             }*/
 
             const amount = Math.ceil(c.cash * 0.1);
-            await CharacterService.DestroyCash(c.name, amount);
+            await CharacterService.DestroyCash(c.name, amount, "Inflation");
             taken += amount;
         }
 
@@ -70,19 +70,15 @@ class PayoutServiceClass
         await Server.SendMessages(Server.generalIds, AdsService.GetLine());
 
         for (const p of payouts) {
-            const char = await Character.GetWithName(p.name);
+            let char = await Character.GetWithName(p.name);
 
             if (!p.amount) {
                 continue;
             }
 
             if (char && char.injury === 0) {
-                char.SetCash(char.cash + p.amount);
-                paid += p.amount;
-
-                this.paid.push(char.name);
-
-                await Character.Update(char);
+                await CharacterService.CreateCash(char.name, p.amount, "Payout");
+                char = await Character.GetWithName(p.name);
 
                 await Server.SendAdmin(
                     `{} Персонаж ${char.name} получил за службу ${FormatCash(p.amount)} благосклонности.`);

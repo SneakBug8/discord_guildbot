@@ -3,7 +3,7 @@ import { Requisite } from "./Requisites/Requisite";
 import { FormatCash } from "../utility/CashFormat";
 import { Server } from "..";
 import { ChannelFilter } from "../utility/ChannelFilter";
-import { CashMovement } from "../utility/Logger";
+import { Transaction } from "../entity/Transaction";
 
 class CharacterServiceClass
 {
@@ -67,7 +67,7 @@ class CharacterServiceClass
                 msg.reply("Вы не авторизованы.");
                 return;
             }
-            const res = await this.PayCash(character.name, matches[1], amount);
+            const res = await this.PayCash(character.name, matches[1], amount, "!pay command");
 
             msg.reply(res.message);
             return true;
@@ -148,7 +148,7 @@ class CharacterServiceClass
         this.Users = this.Users.filter((x) => x.characterId !== character.id);
     }
 
-    public async CreateCash(characterName: string, cash: number)
+    public async CreateCash(characterName: string, cash: number, reason: string = "Cash created")
     {
         const character = await Character.GetWithName(characterName);
         if (!character) {
@@ -156,17 +156,18 @@ class CharacterServiceClass
         }
         character.ChangeCash(cash);
 
-        CashMovement.info(`${character.name} | ${cash}`);
+        await Transaction.Create(character.name, cash, reason);
+
         await Character.Update(character);
         return new Requisite(`Успешно выдано ${cash} благосклонности персонажу ${characterName}.`);
     }
 
-    public async PayCash(from: string, to: string, cash: number)
+    public async PayCash(from: string, to: string, cash: number, reason: string = "Cash paid between characters")
     {
         const willpay = Math.floor(cash * 0.5);
         const delta = cash - willpay;
 
-        const r1 = await this.TransferCash(from, to, willpay);
+        const r1 = await this.TransferCash(from, to, willpay, reason);
 
         if (!r1.result) {
             return r1;
@@ -175,7 +176,7 @@ class CharacterServiceClass
         return r1;
     }
 
-    public async DestroyCash(from: string, cash: number)
+    public async DestroyCash(from: string, cash: number, reason: string = "Cash destroyed")
     {
         const fromCharacter = await Character.GetWithName(from);
 
@@ -188,17 +189,18 @@ class CharacterServiceClass
 
         if (fromCharacter.cash <= cash) {
             return new Requisite().error(`Недостаточно средств. ` +
-            `Вы можете заработать благосклонность посещением ивентов, работой на гильдию или за механическое золото.`);
+                `Вы можете заработать благосклонность посещением ивентов, работой на гильдию или за механическое золото.`);
         }
 
         fromCharacter.SetCash(fromCharacter.cash - cash);
         await Character.Update(fromCharacter);
-        CashMovement.info(`${fromCharacter.cash} | ${-cash}`);
+
+        await Transaction.Create(fromCharacter.name, -cash, reason);
 
         return new Requisite(`Успешная оплата ${FormatCash(cash)} благосклонности.`);
     }
 
-    public async TransferCash(from: string, to: string, cash: number)
+    public async TransferCash(from: string, to: string, cash: number, reason: string = "Cash transfer")
     {
         const fromCharacter = await Character.GetWithName(from);
         const toCharacter = await Character.GetWithName(to);
@@ -220,15 +222,16 @@ class CharacterServiceClass
 
         if (fromCharacter.cash <= cash) {
             return new Requisite().error(`Недостаточно средств. ` +
-            `Вы можете заработать благосклонность посещением ивентов, работой на гильдию или за механическое золото.`);
+                `Вы можете заработать благосклонность посещением ивентов, работой на гильдию или за механическое золото.`);
         }
 
         fromCharacter.ChangeCash(- cash);
         toCharacter.ChangeCash(+ cash);
         await Character.Update(fromCharacter);
         await Character.Update(toCharacter);
-        CashMovement.info(`${fromCharacter.cash} | ${-cash}`);
-        CashMovement.info(`${toCharacter.cash} | ${cash}`);
+
+        await Transaction.Create(fromCharacter.name, -cash, reason);
+        await Transaction.Create(toCharacter.name, cash, reason);
 
         return new Requisite(`Успешная оплата ${FormatCash(cash)} персонажу ${toCharacter.name}`);
     }

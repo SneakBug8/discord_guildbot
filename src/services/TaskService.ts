@@ -122,7 +122,7 @@ class TaskServiceClass
             return char;
         }
 
-        await CharacterService.CreateCash(name, this.CashForTask);
+        await CharacterService.CreateCash(name, this.CashForTask, "Task completed");
 
         await Character.SendMessage(char.data, `:heavy_check_mark: Персонаж ${name} успешно выполнил задание "${text}". ` + this.EndText);
         Server.SendMessages(Server.taskIds, `:heavy_check_mark: Персонаж **${name}** выполнил задание "${text}".`);
@@ -178,7 +178,7 @@ class TaskServiceClass
                 continue;
             }
 
-            await CharacterService.CreateCash(name, this.CashForTask);
+            await CharacterService.CreateCash(name, this.CashForTask, "Task completed");
 
             await Character.SendMessage(char.data, `:heavy_check_mark: Персонаж ${name} в составе группы ${chars} `
                 + `выполнил задание "${text}". ` + this.EndText);

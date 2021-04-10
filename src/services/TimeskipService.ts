@@ -2,6 +2,7 @@ import { Server } from "..";
 import { DiscordBot } from "../api/discord";
 import { Character } from "../entity/Character";
 import { Payout } from "../entity/Payout";
+import { Transaction } from "../entity/Transaction";
 import { MessageWrapper } from "../MessageWrapper";
 import { FormatCash } from "../utility/CashFormat";
 import { CharacterService } from "./CharacterService";
@@ -77,6 +78,11 @@ class TimeskipServiceClass
             msg.reply((await this.Heal(matches[1])).message);
             return true;
         }));
+        Server.RegisterCommand("!cash (.+)", this.AdminFilter(async (msg, matches) =>
+        {
+            msg.reply((await this.GetCash(matches[1])).message);
+            return true;
+        }));
         Server.RegisterCommand("!register (.+) (.+)", this.AdminFilter(async (msg, matches) =>
         {
             msg.reply((await this.Register(matches[1], matches[2])).message);
@@ -90,6 +96,11 @@ class TimeskipServiceClass
         Server.RegisterCommand("!richest", this.AdminFilter(async (msg, matches) =>
         {
             msg.reply((await this.Richest()).message);
+            return true;
+        }));
+        Server.RegisterCommand("!transactions", this.AdminFilter(async (msg, matches) =>
+        {
+            msg.reply((await this.Transactions()).message);
             return true;
         }));
         Server.RegisterCommand("!createcash", this.AdminFilter(async (msg, matches) =>
@@ -212,6 +223,17 @@ class TimeskipServiceClass
         return new Requisite(`${character.name} теперь ранен.`);
     }
 
+    public async GetCash(characterName: string)
+    {
+        const character = await Character.GetWithName(characterName);
+
+        if (!character) {
+            return new Requisite().error("Такого персонажа не существует.");
+        }
+
+        return new Requisite(`Баланс ${character.name} - ${character.cash}`);
+    }
+
     public async Heal(characterName: string)
     {
         const character = await Character.GetWithName(characterName);
@@ -273,6 +295,18 @@ class TimeskipServiceClass
             if (!char.dead) {
                 text += `${char.name}: ${FormatCash(char.cash)}\n`;
             }
+        }
+
+        return new Requisite(text);
+    }
+
+    public async Transactions()
+    {
+        const transactions = await Transaction.Last100();
+        let text = "";
+
+        for (const t of transactions) {
+            text += `[${t.Timestamp.toLocaleString()}] ${t.Name} | ${t.Reason}, change: ${t.Cash}\n`;
         }
 
         return new Requisite(text);
