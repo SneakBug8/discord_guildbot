@@ -4,6 +4,10 @@ import { FormatCash } from "../utility/CashFormat";
 import { Server } from "..";
 import { ChannelFilter } from "../utility/ChannelFilter";
 import { Transaction } from "../entity/Transaction";
+import { MessageWrapper } from "../MessageWrapper";
+import { Logger } from "../utility/Logger";
+
+const DailyReward = 5;
 
 class CharacterServiceClass
 {
@@ -82,6 +86,8 @@ class CharacterServiceClass
             msg.reply((await this.GetStatus(msg.message.author.id)).message);
             return true;
         }));
+        Server.RegisterCommand("!daily", ChannelFilter(async (msg) => this.RedeemDailyRewardCommand(msg)
+        ));
     }
 
     public async Authorize(id: string, charactername: string)
@@ -140,6 +146,7 @@ class CharacterServiceClass
         await this.Authorize(userId, characterName);
 
         return new Requisite().error(`Персонаж ${characterName} успешно зарегистрирован.\n` +
+        `Используйте команду !help, чтобы увидеть список доступных команд.` +
             `https://media.giphy.com/media/qUXkGxDDSF9CM/giphy.gif`);
     }
 
@@ -379,6 +386,35 @@ class CharacterServiceClass
         }
 
         return new Requisite(text);
+    }
+
+    public async RedeemDailyRewardCommand(msg: MessageWrapper)
+    {
+        const character = await this.TryGetForUser(msg.message.author.id);
+
+        if (!character) {
+            msg.reply("Вы не авторизованы.");
+            return;
+        }
+
+        if (character.message) {
+            msg.reply(character.message);
+        }
+
+        const dailyredeemed = await Transaction.GetDaily(character.data.name, new Date(Date.now()));
+
+        if (dailyredeemed) {
+            msg.reply(`Персонаж ${character.data.name} уже получил награду сегодня.`);
+            return;
+        }
+
+        await this.CreateCash(character.data.name, DailyReward, Transaction.DailyReason);
+
+        await Server.SendMessage(Server.mainChannel,
+            `Персонаж ${character.data.name} получает ежедневную награду в ${DailyReward}.`);
+        msg.reply(`Персонаж ${character.data.name} получает ежедневную награду в ${DailyReward}.`);
+
+        return true;
     }
 
 }

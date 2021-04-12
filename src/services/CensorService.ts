@@ -66,7 +66,7 @@ export class CensorServiceClass
 
     private async banCommand(msg: MessageWrapper, matches: RegExpExecArray): Promise<boolean>
     {
-        const match = matches[1];
+        const match = matches[1].toLowerCase();
 
         await WordBan.Create("% " + match + " %");
 
@@ -76,7 +76,7 @@ export class CensorServiceClass
 
     private async exceptionCommand(msg: MessageWrapper, matches: RegExpExecArray): Promise<boolean>
     {
-        const match = matches[1];
+        const match = matches[1].toLowerCase();
 
         await WordException.Create("%" + match + "%");
 

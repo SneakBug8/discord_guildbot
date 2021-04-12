@@ -5,6 +5,8 @@ import { sleep } from "../utility/sleep";
 
 export class Transaction
 {
+    public static DailyReason = "DailyReward";
+
     public static async From(dbobject: any): Promise<Transaction>
     {
         const res = new Transaction();
@@ -126,6 +128,20 @@ export class Transaction
         }
 
         return [];
+    }
+
+    public static async GetDaily(name: string, date: Date): Promise<Transaction>
+    {
+        const data = await TransactionRepository()
+            .where("Timestamp", "like", date.toISOString().split("T")[0] + "%")
+            .andWhere("Name", name)
+            .andWhere("Reason", this.DailyReason).first();
+
+        if (data) {
+            return this.From(data);
+        }
+
+        return null;
     }
 
     public Id: number;

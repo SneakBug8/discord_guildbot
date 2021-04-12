@@ -1,6 +1,6 @@
 bin/
 node_modules/
 *.log
-db.db
+*.db
 package-lock.json
 .env

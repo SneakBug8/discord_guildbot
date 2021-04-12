@@ -67,7 +67,7 @@ class App
                     if (regexp.test(message.message.content)) {
                         const matches = regexp.exec(message.message.content);
                         const r = await c.handler(message, matches);
-                        if (r) {
+                        if (r !== false) {
                             return;
                         }
                     }

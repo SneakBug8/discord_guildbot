@@ -13,7 +13,6 @@ import { LootService } from "./LootService";
 class PayoutServiceClass
 {
     private lastPaid: number;
-    private paid: string[] = [];
 
     public Init()
     {
@@ -50,22 +49,9 @@ class PayoutServiceClass
     {
         await backupDatabase();
 
-        // Естественная убыль
-        const chars = await Character.Active();
-        let taken = 0;
-
-        for (const c of chars) {
-            /*if (this.paid.includes(c.name)) {
-                continue;
-            }*/
-
-            const amount = Math.ceil(c.cash * 0.1);
-            await CharacterService.DestroyCash(c.name, amount, "Inflation");
-            taken += amount;
-        }
-
         const payouts = await Payout.All();
         let paid = 0;
+        const paidchars: string[] = [];
 
         await Server.SendMessages(Server.generalIds, AdsService.GetLine());
 
@@ -80,6 +66,9 @@ class PayoutServiceClass
                 await CharacterService.CreateCash(char.name, p.amount, "Payout");
                 char = await Character.GetWithName(p.name);
 
+                paid += p.amount;
+                paidchars.push(char.name);
+
                 await Server.SendAdmin(
                     `{} Персонаж ${char.name} получил за службу ${FormatCash(p.amount)} благосклонности.`);
                 await Server.SendMessage(Server.mainChannel,
@@ -88,7 +77,9 @@ class PayoutServiceClass
                     `Персонаж ${char.name} получил за службу ${FormatCash(p.amount)} благосклонности.` +
                     ` Теперь у него ${char.cash} благосклонности.` +
                     ((char.cash >= LootService.BuyPrice) ?
-                        `\nНакопленной благосклонности достаточно для покупки сундука.` : ""));
+                        `\nНакопленной благосклонности достаточно для покупки сундука.` : "") +
+                    ((char.cash >= 100) ?
+                            `\nИли для запроса повышения.` : ""));
             }
             else if (char.injury !== 0) {
                 await Server.SendAdmin(`{} Персонаж ${char.name} ранен и не может выполнять свои обязанности.`);
@@ -98,6 +89,20 @@ class PayoutServiceClass
                     `Персонаж ${char.name} ранен и не может выполнять свои обязанности.` +
                     ` Обратитесь к лекарям за лечением и пришлите скриншот лечения в канал отчётов.`);
             }
+        }
+
+        // Естественная убыль
+        const chars = await Character.Active();
+        let taken = 0;
+
+        for (const c of chars) {
+            if (paidchars.includes(c.name)) {
+                continue;
+            }
+
+            const amount = Math.ceil(c.cash * 0.1);
+            await CharacterService.DestroyCash(c.name, amount, "Inflation");
+            taken += amount;
         }
 
         await Server.SendMessage(Server.mainChannel,

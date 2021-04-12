@@ -98,11 +98,8 @@ class TimeskipServiceClass
             msg.reply((await this.Richest()).message);
             return true;
         }));
-        Server.RegisterCommand("!transactions", this.AdminFilter(async (msg, matches) =>
-        {
-            msg.reply((await this.Transactions()).message);
-            return true;
-        }));
+        Server.RegisterCommand("!transactions",
+        this.AdminFilter(async (msg, matches) => this.Transactions(msg, matches)));
         Server.RegisterCommand("!createcash", this.AdminFilter(async (msg, matches) =>
         {
             msg.reply((await this.CreateCash(msg.message.author.id)).message);
@@ -300,16 +297,23 @@ class TimeskipServiceClass
         return new Requisite(text);
     }
 
-    public async Transactions()
+    public async Transactions(msg: MessageWrapper, matches: RegExpExecArray)
     {
         const transactions = await Transaction.Last100();
         let text = "";
+        let index = 0;
 
         for (const t of transactions) {
+            index++;
             text += `[${t.Timestamp.toLocaleString()}] ${t.Name} | ${t.Reason}, change: ${t.Cash}\n`;
+            if (index >= 10) {
+                msg.reply(text);
+                index = 0;
+                text = "";
+            }
         }
 
-        return new Requisite(text);
+        return true;
     }
 
     public async CreateCash(userId: string)

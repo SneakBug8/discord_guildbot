@@ -78,7 +78,7 @@ export class WordBan
     public static async MatchAll(value: string): Promise<WordBan[]>
     {
         const data = await BansRepository().select()
-        .whereRaw(`"??" like ??`, [value.replace(new RegExp("[\"'`]"), ""), "Match"]).orderBy("Occured", "desc");
+        .whereRaw(`"??" like ??`, [value.replace(/[\"'`]/g, ""), "Match"]).orderBy("Occured", "desc");
         const res = new Array<WordBan>();
 
         if (data) {

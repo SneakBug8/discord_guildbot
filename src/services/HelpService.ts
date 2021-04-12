@@ -3,6 +3,23 @@ import { MessageWrapper } from "../MessageWrapper";
 
 export class HelpServiceClass
 {
+    public HelpText = `
+    Команды RP бота Кракен:
+    !register (Имя персонажа) - зарегистрировать персонажа.
+    !login (Имя персонажа) - войти за персонажа.
+    !status - Состояние персонажа.
+    !daily - Получить ежедневную награду.
+    !cash - Посмотреть баланс персонажа.
+    !health - Проверить здоровье персонажа.
+    !pay (кому) (сколько) - Перевести благосклонность другому персонажу с потерей 50%.
+    !characters - Посмотреть всех ваших персонажей.
+    !character (имя) - Поиск персонажа и его владельца в системе.
+    !player (@mention) - Поиск персонажей игрока.
+    !items - Инвентарь персонажа.
+    !lootbox open - Открыть сундук из инвентаря.
+    !lootbox buy - Еупить сундук за 10 благосклонности.
+    !help - Вывод справки.
+`;
     public checkMessage(msg: MessageWrapper)
     {
         if (msg.message.guild
@@ -12,22 +29,7 @@ export class HelpServiceClass
         }
 
         if (new RegExp("!help").test(msg.message.content)) {
-            msg.reply(`
-Команды RP бота Кракен:
-!register (Имя персонажа) - зарегистрировать персонажа.
-!login (Имя персонажа) - войти за персонажа.
-!status - Состояние персонажа
-!cash - баланс персонажа.
-!health - здоровье персонажа.
-!pay (кому) (сколько) - перевести благосклонность другому персонажу с потерей 50%.
-!list - все ваши персонажи.
-!character (имя) - поиск персонажа и его владельца в системе
-!player (@mention) - поиск персонажей игрока
-!items - инвентарь персонажа
-!lootbox open - открыть сундук из инвентаря
-!lootbox buy - купить сундук за 10 благосклонности
-!help - вывод справки
-            `);
+            msg.reply(this.HelpText);
             return true;
         }
 

@@ -79,7 +79,7 @@ export class WordException
     public static async MatchAll(value: string): Promise<WordException[]>
     {
         const data = await ExceptionsRepository().select()
-        .whereRaw(`"??" like ??`, [value.replace(new RegExp("[\"'`]"), ""), "Match"]).orderBy("Occured", "desc");
+        .whereRaw(`"??" like ??`, [value.replace(/[\"'`]/g, ""), "Match"]).orderBy("Occured", "desc");
         const res = new Array<WordException>();
 
         if (data) {
