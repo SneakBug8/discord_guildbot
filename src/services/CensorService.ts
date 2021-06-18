@@ -14,6 +14,7 @@ export class CensorServiceClass
         Server.RegisterCommand(".*", (msg) => this.checkMessage(msg));
         Server.RegisterCommand("^[^!].*$", this.filterNotCommand);
         Server.RegisterCommand("!ban (.+)", TimeskipService.AdminFilter(this.banCommand));
+        Server.RegisterCommand("!eban (.+)", TimeskipService.AdminFilter(this.exactBanCommand));
         Server.RegisterCommand("!exception (.+)", TimeskipService.AdminFilter(this.exceptionCommand));
     }
 
@@ -24,17 +25,16 @@ export class CensorServiceClass
             return false;
         }
 
-        let filteredtext = msg.message.content.toLowerCase();
+        const inputtext = msg.message.content.toLowerCase();
 
         // console.log(`Filtering text "${filteredtext}"`);
         let res = false;
-        res = res || await this.DbFilter(filteredtext);
-        res = res || this.checkString(filteredtext);
+        res = res || await this.DbFilter(inputtext);
+        res = res || this.checkString(inputtext);
 
         if (!res) {
-            for (const replacement of replacements) {
-                filteredtext = filteredtext.replace(new RegExp(replacement[0], "g"), replacement[1] as string);
-            }
+            const filteredtext = this.runReplacements(inputtext);
+            res = res || await this.DbFilter(filteredtext);
             res = res || this.checkString(filteredtext);
         }
 
@@ -64,7 +64,26 @@ export class CensorServiceClass
         return true;
     }
 
+    private runReplacements(msg: string)
+    {
+        let res = msg;
+        for (const replacement of replacements) {
+            res = res.replace(new RegExp(replacement[0], "g"), replacement[1] as string);
+        }
+        return res;
+    }
+
     private async banCommand(msg: MessageWrapper, matches: RegExpExecArray): Promise<boolean>
+    {
+        const match = CensorService.runReplacements(matches[1].toLowerCase());
+
+        await WordBan.Create("% " + match + " %");
+
+        msg.reply(`Добавил запрет на фразу "${match}"`);
+        return true;
+    }
+
+    private async exactBanCommand(msg: MessageWrapper, matches: RegExpExecArray): Promise<boolean>
     {
         const match = matches[1].toLowerCase();
 
@@ -96,9 +115,10 @@ export class CensorServiceClass
         for (const match of matches) {
             this.word = match.Match;
 
-            const regex = match.Match.replace("%", ".*(")
-            .replace("%", ").*")
-            .replace(new RegExp("_"), ".");
+            const regex = match.Match
+                .replace("%", ".*(")
+                .replace("%", ").*")
+                .replace(new RegExp("_"), ".");
 
             const found = new RegExp(regex).exec(value);
 
@@ -254,7 +274,7 @@ const replacements = [
     ["x", "х"],
     ["w", "в"],
     ["n", "п"],
-    ["[-+!)(*&%$#@)]", ""],
+    ["[-+!)(*&%$#@).]", ""],
     ["0", "о"]
 ];
 

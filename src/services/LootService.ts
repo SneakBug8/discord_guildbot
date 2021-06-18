@@ -18,15 +18,16 @@ class LootServiceClass
     {
         Server.RegisterCommand("!lootbox buy", ChannelFilter(async (msg) =>
         {
-            const char = await CharacterService.GetForUser(msg.message.author.id);
-            if (!char) {
-                msg.reply("Вы не авторизованы.");
+            const char = await CharacterService.TryGetForUser(msg.message.author.id);
+            msg.reply(char.message);
+            if (!char.result) {
                 return true;
             }
-            const res = await this.Buy(char);
+
+            const res = await this.Buy(char.data);
 
             if (res.result) {
-                msg.reply(`Персонаж ${char.name} успешно купил сундук за ${FormatCash(this.BuyPrice)} благосклонности.`);
+                msg.reply(`Персонаж ${char.data.name} успешно купил сундук за ${FormatCash(this.BuyPrice)} благосклонности.`);
             }
             msg.reply(res.message);
             return true;
@@ -35,13 +36,9 @@ class LootServiceClass
         {
             const char = await CharacterService.TryGetForUser(msg.message.author.id);
 
+            msg.reply(char.message);
             if (!char.result) {
-                msg.reply(char.message);
                 return true;
-            }
-
-            if (char.message) {
-                msg.reply(char.message);
             }
 
             const res = await this.TryRoll(char.data);

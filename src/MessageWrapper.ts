@@ -33,6 +33,10 @@ export class MessageWrapper
 
     public async reply(text: string)
     {
+        if (!text) {
+            return;
+        }
+
         const r = await this.message.reply(text);
         return new MessageWrapper(r);
     }

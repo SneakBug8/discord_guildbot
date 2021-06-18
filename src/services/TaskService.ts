@@ -124,10 +124,10 @@ class TaskServiceClass
 
         await CharacterService.CreateCash(name, this.CashForTask, "Task completed");
 
-        await Character.SendMessage(char.data, `:heavy_check_mark: Персонаж ${name} успешно выполнил задание "${text}". ` + this.EndText);
-        Server.SendMessages(Server.taskIds, `:heavy_check_mark: Персонаж **${name}** выполнил задание "${text}".`);
+        await Character.SendMessage(char.data, `:white_check_mark: Персонаж ${name} успешно выполнил задание "${text}". ` + this.EndText);
+        Server.SendMessages(Server.taskIds, `:white_check_mark: Персонаж **${name}** выполнил задание "${text}".`);
 
-        return new Requisite(`:heavy_check_mark: Успешно завершено задание "${text}" персонажа ${name}`);
+        return new Requisite(`:white_check_mark: Успешно завершено задание "${text}" персонажа ${name}`);
     }
 
     public async FailTask(name: string, text: string)
@@ -180,13 +180,13 @@ class TaskServiceClass
 
             await CharacterService.CreateCash(name, this.CashForTask, "Task completed");
 
-            await Character.SendMessage(char.data, `:heavy_check_mark: Персонаж ${name} в составе группы ${chars} `
+            await Character.SendMessage(char.data, `:white_check_mark: Персонаж ${name} в составе группы ${chars} `
                 + `выполнил задание "${text}". ` + this.EndText);
         }
 
-        Server.SendMessages(Server.taskIds, `:heavy_check_mark: Персонажи **${chars}** успешно выполнили задание "${text}".`);
+        Server.SendMessages(Server.taskIds, `:white_check_mark: Персонажи **${chars}** успешно выполнили задание "${text}".`);
 
-        return new Requisite(`:heavy_check_mark: Успешно завершено задание "${text}" персонажами ${chars}`);
+        return new Requisite(`:white_check_mark: Успешно завершено задание "${text}" персонажами ${chars}`);
     }
 
     public async FailTaskToMany(names: string[], text: string)

@@ -49,12 +49,9 @@ class CharacterServiceClass
         {
             const character = await this.TryGetForUser(msg.message.author.id);
 
+            msg.reply(character.message);
             if (!character.result) {
-                msg.reply(character.message);
                 return true;
-            }
-            if (character.message) {
-                msg.reply(character.message);
             }
 
             msg.reply(`У персонажа ${character.data.name} благосклонность ${FormatCash(character.data.cash)}.\n` +
@@ -65,13 +62,14 @@ class CharacterServiceClass
         {
             const amount = Number.parseFloat(matches[2]);
 
-            const character = await this.GetForUser(msg.message.author.id);
+            const character = await this.TryGetForUser(msg.message.author.id);
 
-            if (!character) {
-                msg.reply("Вы не авторизованы.");
+            msg.reply(character.message);
+            if (!character.result) {
                 return;
             }
-            const res = await this.PayCash(character.name, matches[1], amount, "!pay command");
+
+            const res = await this.PayCash(character.data.name, matches[1], amount, "!pay command");
 
             msg.reply(res.message);
             return true;
@@ -110,7 +108,9 @@ class CharacterServiceClass
         this.Login(id, character);
 
         return new Requisite(`Авторизован как ${character.name}.\n` +
-            `https://media.giphy.com/media/3oEjHBhdFg2pqmsWQ0/giphy.gif`);
+            `https://media.giphy.com/media/3oEjHBhdFg2pqmsWQ0/giphy.gif` +
+            (await this.IsDailyAvailable(character.name) ? "Персонажу доступна ежедневная награда," +
+            " используйте команду !daily." : ""));
     }
 
     public Login(id: string, character: Character)
@@ -146,7 +146,7 @@ class CharacterServiceClass
         await this.Authorize(userId, characterName);
 
         return new Requisite().error(`Персонаж ${characterName} успешно зарегистрирован.\n` +
-        `Используйте команду !help, чтобы увидеть список доступных команд.` +
+            `Используйте команду !help, чтобы увидеть список доступных команд.` +
             `https://media.giphy.com/media/qUXkGxDDSF9CM/giphy.gif`);
     }
 
@@ -194,7 +194,7 @@ class CharacterServiceClass
             return new Requisite().error("Некорректная сумма");
         }
 
-        if (fromCharacter.cash <= cash) {
+        if (fromCharacter.cash < cash) {
             return new Requisite().error(`Недостаточно средств. ` +
                 `Вы можете заработать благосклонность посещением ивентов, работой на гильдию или за механическое золото.`);
         }
@@ -251,10 +251,10 @@ class CharacterServiceClass
 
     public async TryGetForUser(userId: string)
     {
-        const existing = this.Users.find((x) => x.userId === userId);
+        const existing = await this.GetForUser(userId);
 
         if (existing) {
-            return await this.TryGetCharacter(existing.characterId);
+            return new Requisite(existing);
         }
 
         // try autoauthorize
@@ -262,7 +262,9 @@ class CharacterServiceClass
         if (characters.length) {
             this.Login(userId, characters[0]);
             return new Requisite(characters[0])
-                .success(`Автоматически авторизован как ${characters[0].name}.`);
+                .success(`Автоматически авторизован как ${characters[0].name}.` +
+                    (await this.IsDailyAvailable(characters[0].name) ? "Персонажу доступна ежедневная награда," +
+                        " используйте команду !daily." : ""));
         }
 
         return new Requisite<Character>().error(`Вы не авторизованы.\n`
@@ -388,20 +390,21 @@ class CharacterServiceClass
         return new Requisite(text);
     }
 
+    public async IsDailyAvailable(charname: string)
+    {
+        return !await Transaction.GetDaily(charname, new Date(Date.now()));
+    }
+
     public async RedeemDailyRewardCommand(msg: MessageWrapper)
     {
         const character = await this.TryGetForUser(msg.message.author.id);
 
+        msg.reply(character.message);
         if (!character) {
-            msg.reply("Вы не авторизованы.");
             return;
         }
 
-        if (character.message) {
-            msg.reply(character.message);
-        }
-
-        const dailyredeemed = await Transaction.GetDaily(character.data.name, new Date(Date.now()));
+        const dailyredeemed = !(await this.IsDailyAvailable(character.data.name));
 
         if (dailyredeemed) {
             msg.reply(`Персонаж ${character.data.name} уже получил награду сегодня.`);

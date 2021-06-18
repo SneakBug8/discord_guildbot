@@ -10,14 +10,14 @@ class ItemsServiceClass
     {
         Server.RegisterCommand("!items$", ChannelFilter(async (msg) =>
         {
-            const char = await CharacterService.GetForUser(msg.message.author.id);
+            const char = await CharacterService.TryGetForUser(msg.message.author.id);
 
-            if (!char) {
-                msg.reply("Вы не авторизованы в системе.");
+            msg.reply(char.message);
+            if (!char.result) {
                 return true;
             }
 
-            const items = await this.ListItems(char.name);
+            const items = await this.ListItems(char.data.name);
             let res = "";
             let i = 0;
             for (const item of items) {
@@ -27,7 +27,7 @@ class ItemsServiceClass
                 msg.reply(res);
             }
             else {
-                msg.reply(`У персонажа ${char.name} нет предметов.`);
+                msg.reply(`У персонажа ${char.data.name} нет предметов.`);
             }
             return true;
         }));

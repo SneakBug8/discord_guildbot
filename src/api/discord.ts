@@ -11,7 +11,7 @@ DiscordBot.on("ready", async () =>
     await ClearOldMessages();
     await sleep(2000);
 
-    Server.SendMessages(Server.channelIds, "Бот перезапущен. Вам потребуется перелогиниться.");
+    // Server.SendMessages(Server.channelIds, "Бот перезапущен. Вам потребуется перелогиниться.");
     console.log(`Logged in as ${DiscordBot.user.tag}!`);
 
     setInterval(() => ClearOldMessages(), 60 * 1000);
